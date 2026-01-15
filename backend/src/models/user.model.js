@@ -55,21 +55,42 @@ const userSchema = new Schema({
         scheduledDate : Date,
         note : String
     }],
+    followers : [
+        {
+            type : Schema.Types.ObjectId,
+            ref : "User"
+        }
+    ],
+    following : [
+        {
+            type : Schema.Types.ObjectId,
+            ref : "User"
+        }
+    ],
     refreshToken : {
         type: String
+    },
+    isVerified  : {
+        type: Boolean,
+        default: false
+    },
+    verifyToken : {
+        type: String
+    },
+    verifyTokenExpiry : {
+        type: Date
     }
 }, 
     { timestamps: true }
 );
 
 
-userSchema.pre("save", async function(next){
+userSchema.pre("save", async function(){
 
-    if(!this.isModified("password")) return next()
+    if(!this.isModified("password")) return 
 
     this.password = await bcrypt.hash(this.password,10)
 
-    next()
 })
 
 userSchema.methods.isPasswordCorrect = async function(password) {
