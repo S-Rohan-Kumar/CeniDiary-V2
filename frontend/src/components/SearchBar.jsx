@@ -18,7 +18,7 @@ export default function SearchBar() {
       >
         {/* Input Group */}
         <div className="flex flex-1 items-center bg-black/20 sm:bg-transparent rounded-2xl sm:rounded-none px-3">
-          <div className="text-zinc-600 text-lg mr-2">🔍</div>
+          <div className="text-zinc-600 text-lg mr-2"></div>
           <input
             type="text"
             placeholder="Search movies..."

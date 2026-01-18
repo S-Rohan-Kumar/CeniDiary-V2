@@ -54,7 +54,7 @@ const searchUsers = asyncHandler(async (req, res) => {
     throw new APIError(400, "Username query parameter is required");
   }
 
-  const users = await Userfind({
+  const users = await User.find({
     username: { $regex: username, $options: "i" },
   }).select("username avatar fullname");
 
@@ -64,24 +64,21 @@ const searchUsers = asyncHandler(async (req, res) => {
 });
 
 const getUserStatus = asyncHandler(async (req, res) => {
-  const userId = req.user?._id;
-  const user = await User.findById(userId);
+  const targetId = req.params.userId || req.user?._id; 
+  
+  const user = await User.findById(targetId);
   if (!user) {
     throw new APIError(404, "User not found");
   }
 
   const stats = {
-    totalWatched: user.watchHistory.length,
-    totalReviews: user.watchNumber,
-    followersCount: user.followers.length,
-    followingCount: user.following.length,
-    badgesCount: user.badges.length,
-    favoritesCount: user.favorites.length,
+    totalReviews: user.watchNumber || 0,
+    followersCount: user.followers?.length || 0,
+    followingCount: user.following?.length || 0,
+    isFollowing: user.followers?.includes(req.user?._id) 
   };
 
-  return res
-    .status(200)
-    .json(new APIResponse(200, stats, "User stats fetched successfully"));
+  return res.status(200).json(new APIResponse(200, stats, "Stats fetched"));
 });
 
 export { toggleFollow, searchUsers, getUserStatus };

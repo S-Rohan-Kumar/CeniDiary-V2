@@ -2,6 +2,9 @@ import { APIResponse } from "../utils/api-response.js";
 import { APIError } from "../utils/api-error.js";
 import { asyncHandler } from "../utils/async-handler.js";
 import { User } from "../models/user.model.js";
+import { Movie } from "../models/movie.model.js";
+import { Review } from "../models/review.model.js";
+import { List } from "../models/list.model.js"; 
 import {
   uploadOnCloudinary,
   deleteFromCloundnary,
@@ -81,7 +84,7 @@ const registerUser = asyncHandler(async (req, res) => {
     });
 
     const createdUser = await User.findById(user._id).select(
-      "-password -refreshToken"
+      "-password -refreshToken",
     );
     if (!createdUser) {
       throw new APIError(500, "Error creating user");
@@ -96,7 +99,7 @@ const registerUser = asyncHandler(async (req, res) => {
     }
     throw new APIError(
       500,
-      "Somethig went wrong while registration and images were deleted"
+      "Somethig went wrong while registration and images were deleted",
     );
   }
 });
@@ -131,7 +134,7 @@ const loginUser = asyncHandler(async (req, res) => {
     await generateAccessTokenandRefreshToken(user._id);
 
   const loggedUser = await User.findById(user._id).select(
-    "-password -refreshToken"
+    "-password -refreshToken",
   );
 
   if (!loggedUser) {
@@ -151,8 +154,8 @@ const loginUser = asyncHandler(async (req, res) => {
       new APIResponse(
         200,
         { user: loggedUser, accessToken, refreshToken },
-        "User logged in successfully"
-      )
+        "User logged in successfully",
+      ),
     );
 });
 
@@ -167,7 +170,7 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
   try {
     const decodedToken = jwt.verify(
       incomingrefreshToken,
-      process.env.REFRESH_TOKEN_SECRET
+      process.env.REFRESH_TOKEN_SECRET,
     );
 
     const user = await User.findById(decodedToken?._id);
@@ -203,13 +206,13 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
         new APIResponse(
           200,
           { accessToken, refreshToken: newRefreshToken },
-          "Access token refreshed successfully"
-        )
+          "Access token refreshed successfully",
+        ),
       );
   } catch (error) {
     throw new APIError(
       500,
-      "Somehting went wrong while refreshing access token"
+      "Somehting went wrong while refreshing access token",
     );
   }
 });
@@ -222,7 +225,7 @@ const logoutUser = asyncHandler(async (req, res) => {
         refreshToken: null,
       },
     },
-    { new: true }
+    { new: true },
   );
 
   const options = {
@@ -258,60 +261,129 @@ const changePassword = asyncHandler(async (req, res) => {
 });
 
 const GetCurrentUser = asyncHandler(async (req, res) => {
+  const user = await User.findById(req.user._id).populate(
+    "watchHistory",
+    "tmdbId",
+  );
   return res
     .status(200)
-    .json(new APIResponse(200, req.user, "Current user details"));
+    .json(new APIResponse(200, user, "Current user details"));
 });
 
-const updateAccountDetails = asyncHandler(async (req, res) => {
-  const { fullname, email } = req.body;
+const updateProfile = asyncHandler(async (req, res) => {
+  // 1. Get text fields from body
+  const { fullname, username } = req.body;
 
-  if (!fullname || !email) {
-    throw new APIError(400, "All fields are required");
-  }
+  // 2. Prepare update object
+  const updateData = {};
+  if (fullname) updateData.fullname = fullname;
+  if (username) updateData.username = username;
 
-  const user = await User.findByIdAndUpdate(
-    req.user?._id,
-    {
-      $set: {
-        fullname,
-        email,
-      },
-    },
-    { new: true }
-  ).select("-password -refreshToken");
-
-  return res
-    .status(200)
-    .json(new APIResponse(200, user, "User details updated successfully"));
-});
-
-const updateUserAvatar = asyncHandler(async (req, res) => {
+  // 3. Handle Avatar Upload if a file exists
   const avatarLocalPath = req.file?.path;
-
-  if (!avatarLocalPath) {
-    throw new APIError(400, "Please provide the avatar");
+  if (avatarLocalPath) {
+    const avatar = await uploadOnCloudinary(avatarLocalPath);
+    if (!avatar.url) {
+      throw new APIError(500, "Error while uploading avatar to Cloudinary");
+    }
+    updateData.avatar = avatar.url;
   }
 
-  const avatar = await uploadOnCloudinary(avatarLocalPath);
-
-  if (!avatar.url) {
-    throw new APIError(500, "Somethign went wrong while uploading avatar");
+  // 4. Validate that at least one field is being updated
+  if (Object.keys(updateData).length === 0) {
+    throw new APIError(400, "No fields provided for update");
   }
 
+  // 5. Update the User
   const user = await User.findByIdAndUpdate(
     req.user?._id,
-    {
-      $set: {
-        avatar: avatar.url,
-      },
-    },
-    { new: true }
+    { $set: updateData },
+    { new: true, runValidators: true },
   ).select("-password -refreshToken");
 
   return res
     .status(200)
-    .json(new APIResponse(200, user, "User avatar updated successfully"));
+    .json(new APIResponse(200, user, "Profile updated successfully"));
+});
+
+const addtoWatchHistory = asyncHandler(async (req, res) => {
+  const { tmdbId } = req.body;
+  if (!tmdbId) throw new APIError(400, "tmdbId is required");
+
+  const movie = await Movie.findOne({ tmdbId: Number(tmdbId) });
+  if (!movie)
+    throw new APIError(404, "Movie not found in DB. Please sync first.");
+
+  const user = await User.findById(req.user._id);
+
+  const isAlreadyAdded = user.watchHistory.includes(movie._id);
+
+  if (isAlreadyAdded) {
+    await User.findByIdAndUpdate(req.user._id, {
+      $pull: { watchHistory: movie._id },
+    });
+
+    const deletedReview = await Review.findOneAndDelete({
+      owner: req.user._id,
+      movie: movie._id,
+    });
+
+    console.log(deletedReview ? "Review deleted" : "No review found to delete");
+  } else {
+    await User.findByIdAndUpdate(req.user._id, {
+      $addToSet: { watchHistory: movie._id },
+    });
+  }
+  const updatedUser = await User.findById(req.user._id).populate({
+    path: "watchHistory",
+    select: "tmdbId",
+  });
+
+  return res
+    .status(200)
+    .json(
+      new APIResponse(
+        200,
+        updatedUser.watchHistory,
+        isAlreadyAdded ? "Removed from history" : "Added to history",
+      ),
+    );
+});
+
+export const getPublicProfile = asyncHandler(async (req, res) => {
+  const { username } = req.params;
+
+  if (!username) {
+    throw new APIError(400, "Username is required");
+  }
+
+  const user = await User.findOne({ username }).select(
+    "-password -refreshToken -email",
+  );
+
+  if (!user) {
+    throw new APIError(404, "User not found");
+  }
+
+  const publicCollections = await List.find({
+    owner: user._id,
+    isPublic: true,
+  }).populate("movies");
+
+  // 3. Fetch Reviews
+  const reviews = await Review.find({ owner: user._id }).populate("movie");
+
+  return res.status(200).json(
+    new APIResponse(
+      200,
+      {
+        user,
+        collections: publicCollections,
+        reviews: reviews,
+      },
+      "Public profile fetched successfully",
+    ),
+  );
 });
 
 export {
@@ -321,6 +393,6 @@ export {
   logoutUser,
   changePassword,
   GetCurrentUser,
-  updateAccountDetails,
-  updateUserAvatar,
+  updateProfile,
+  addtoWatchHistory,
 };
