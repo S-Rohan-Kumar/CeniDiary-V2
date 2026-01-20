@@ -16,14 +16,19 @@ export default function SearchPage() {
     }
   }, [user]); // Runs whenever the 'user' object changes
 
+  const tmdbInstance = axios.create({
+    baseURL: "https://api.themoviedb.org/3",
+    withCredentials: false 
+  });
+  
   const handleSearch = async (e) => {
     if (e) e.preventDefault();
     if (!query) return;
 
     setLoading(true);
     try {
-      const movieRes = await axios.get(
-        `https://api.themoviedb.org/3/search/multi?query=${query}&api_key=YOUR_TMDB_KEY`
+      const movieRes = await tmdbInstance.get(
+        `/search/multi?api_key=${API_KEY}&query=${query}`
       );
       
       // 2. Fetch Users from your Social Backend
