@@ -51,13 +51,18 @@ export default function MovieDetails() {
 
   const API_KEY = import.meta.env.VITE_TMDB_KEY;
 
+  const tmdbInstance = axios.create({
+    baseURL: "https://api.themoviedb.org/3",
+    withCredentials: false 
+  });
+  
   useEffect(() => {
     const fetchAllData = async () => {
       try {
         setLoading(true);
-        const movieRes = await axios.get(
-          `https://api.themoviedb.org/3/${mediaType}/${id}?api_key=${API_KEY}&append_to_response=credits,watch/providers`,
-        );
+        const movieRes = await tmdbInstance.get(
+        `/${mediaType}/${id}?api_key=${API_KEY}&append_to_response=credits,watch/providers`
+      );
 
         const data = movieRes.data;
         const normalized = {
