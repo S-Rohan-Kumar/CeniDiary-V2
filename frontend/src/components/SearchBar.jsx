@@ -18,15 +18,20 @@ export default function SearchBar() {
     }
   }, [user]);
 
+  const tmdbInstance = axios.create({
+    baseURL: "https://api.themoviedb.org/3",
+    withCredentials: false 
+  });
+  
   const handleGlobalSearch = async (e) => {
     if (e) e.preventDefault();
     if (!query.trim()) return;
 
     setLoading(true);
     try {
-      const movieRes = await axios.get(
-        `https://api.themoviedb.org/3/search/multi?api_key=${API_KEY}&query=${query}`
-      );
+      const movieRes = await tmdbInstance.get(
+      `/search/multi?api_key=${API_KEY}&query=${query}`
+    );
       
       const cinemaResults = movieRes.data.results.filter(
         item => item.media_type === "movie" || item.media_type === "tv"
