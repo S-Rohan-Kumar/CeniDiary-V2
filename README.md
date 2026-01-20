@@ -123,7 +123,7 @@ This project required careful handling of **CORS** and **cross-site cookies**:
 
 ## Contact
 
-**[Your Name]**
+**S Rohan Kumar**
 Second Year B.E. Student at BIT
 
 * GitHub: [https://github.com/your-username](https://github.com/your-username)
