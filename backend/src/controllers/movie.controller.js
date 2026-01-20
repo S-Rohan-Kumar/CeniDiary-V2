@@ -11,7 +11,7 @@ const searchMovies = asyncHandler(async (req, res) => {
   }
   try {
     const response = await axios.get(
-      `https://api.themoviedb.org/3/search/movie?api_key=${process.env.TMDB_KEY}&query=${query}`
+      `https://api.themoviedb.org/3/search/multi?api_key=${process.env.TMDB_KEY}&query=${query}`,
     );
 
     const movies = response.data.results;
@@ -24,8 +24,8 @@ const searchMovies = asyncHandler(async (req, res) => {
         new APIResponse(
           200,
           response.data.results,
-          "Movies fetched successfully"
-        )
+          "Movies fetched successfully",
+        ),
       );
   } catch (error) {
     console.log(error);
@@ -35,34 +35,37 @@ const searchMovies = asyncHandler(async (req, res) => {
 
 const getandSyncMovie = asyncHandler(async (req, res) => {
   const { tmdbId } = req.params;
-  let movie = await Movie.findOne({ tmdbId });
+  const { mediaType } = req.query; 
+  
+  // Find by both
+  let movie = await Movie.findOne({ tmdbId, mediaType: mediaType || "movie" });
 
   if (!movie) {
     try {
+      const type = mediaType || "movie";
       const response = await axios.get(
-        `https://api.themoviedb.org/3/movie/${tmdbId}?api_key=${process.env.TMDB_KEY}`
+        `https://api.themoviedb.org/3/${type}/${tmdbId}?api_key=${process.env.TMDB_KEY}`
       );
 
       const data = response.data;
 
       movie = await Movie.create({
         tmdbId: data.id,
-        title: data.title,
+        mediaType: type, // Store the type
+        title: data.title || data.name, // Normalize
         posterPath: data.poster_path,
         backdropPath: data.backdrop_path,
         overview: data.overview,
-        releaseDate: data.release_date,
-        genreIds: data.genres.map((genre) => genre.id),
+        releaseDate: data.release_date || data.first_air_date,
+        genreIds: data.genres?.map((genre) => genre.id),
         voteAverage: data.vote_average,
       });
     } catch (error) {
       console.log(error);
-      throw new APIError(500, "Failed to fetch movie from external API");
+      throw new APIError(500, "Failed to fetch from TMDB");
     }
   }
-  return res
-    .status(200)
-    .json(new APIResponse(200, movie, "Movie fetched successfully"));
+  return res.status(200).json(new APIResponse(200, movie, "Fetched successfully"));
 });
 
 const bulkSyncMovies = async (movies) => {
@@ -72,16 +75,16 @@ const bulkSyncMovies = async (movies) => {
 
   const ops = movies.map((movie) => ({
     updateOne: {
-      filter: { tmdbId: movie.id }, // Find by TMDB ID
+      filter: { tmdbId: movie.id, mediaType: movie.media_type || "movie" },
       update: {
         $set: {
           tmdbId: movie.id,
-          title: movie.title,
+          mediaType: movie.media_type || "movie", 
+          title: movie.title || movie.name,
+          releaseDate: movie.release_date || movie.first_air_date, 
           posterPath: movie.poster_path,
           backdropPath: movie.backdrop_path,
           overview: movie.overview,
-          releaseDate: movie.release_date,
-          genreIds: movie.genre_ids,
           voteAverage: movie.vote_average,
         },
       },
@@ -99,14 +102,14 @@ const bulkSyncMovies = async (movies) => {
 const getTrendingMovies = asyncHandler(async (req, res) => {
   try {
     const response = await axios.get(
-      `https://api.themoviedb.org/3/trending/movie/day?api_key=${process.env.TMDB_KEY}`
+      `https://api.themoviedb.org/3/trending/all/day?api_key=${process.env.TMDB_KEY}`,
     );
-  
+
     const movies = response.data.results;
-  
+
     // Sync the entire trending list to your DB
     await bulkSyncMovies(movies);
-  
+
     return res
       .status(200)
       .json(new APIResponse(200, movies, "Trending movies synced and fetched"));
@@ -116,4 +119,4 @@ const getTrendingMovies = asyncHandler(async (req, res) => {
   }
 });
 
-export { searchMovies, getandSyncMovie , getTrendingMovies };
+export { searchMovies, getandSyncMovie, getTrendingMovies };

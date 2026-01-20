@@ -12,7 +12,6 @@ export default function Profile() {
   const [loading, setLoading] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
-  // VIBRANT COLOR SCHEME: Strict mapping for dots and card tags
   const sentiments = useMemo(() => [
     { label: "All", color: "bg-zinc-800", dot: "bg-zinc-500" },
     { label: "Skip", color: "bg-red-600", dot: "bg-red-600" },
@@ -40,7 +39,6 @@ export default function Profile() {
     fetchData();
   }, [activeTab, user]);
 
-  // LOGIC: Robust filtering that handles potential database casing mismatches
   const filteredData = useMemo(() => {
     if (activeTab !== "Reviews" || activeSentiment === "All") return data;
     return data.filter(review => 
@@ -56,7 +54,6 @@ export default function Profile() {
     <div className="min-h-screen bg-black text-white p-12 font-sans tracking-tight">
       <div className="max-w-[1400px] mx-auto flex flex-col lg:flex-row gap-12 text-left">
         
-        {/* --- SIDEBAR --- */}
         <div className="lg:w-80 shrink-0">
           <div className="bg-[#1A1A1A] p-10 rounded-[3rem] border border-white/5 text-center shadow-2xl relative group">
             <div className="w-36 h-36 mx-auto rounded-full bg-[#262626] border-4 border-zinc-900 shadow-2xl overflow-hidden mb-8 transition-all duration-500 group-hover:border-red-600">
@@ -79,7 +76,6 @@ export default function Profile() {
           </div>
         </div>
 
-        {/* --- CONTENT AREA --- */}
         <div className="flex-1 space-y-8">
           
           <div className="flex bg-[#1A1A1A] p-1.5 rounded-2xl border border-white/5 w-fit">
@@ -94,7 +90,6 @@ export default function Profile() {
             ))}
           </div>
 
-          {/* SENTIMENT BAR */}
           {activeTab === "Reviews" && (
             <div className="bg-[#1A1A1A] p-6 rounded-[2rem] border border-white/5 flex items-center justify-around">
                {sentiments.map(s => (
@@ -111,7 +106,6 @@ export default function Profile() {
             </div>
           )}
 
-          {/* DATA FEED */}
           <div className="bg-[#1A1A1A] rounded-[3rem] border border-white/5 min-h-[500px] p-8 shadow-2xl relative">
              {loading ? (
                <div className="flex items-center justify-center h-full text-red-600 font-black text-3xl italic animate-pulse">Scanning Vault...</div>

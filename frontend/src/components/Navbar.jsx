@@ -9,13 +9,13 @@ const Navbar = () => {
 
   const handleLogout = async () => {
     await logout();
-    setIsDropdownOpen(false); // Close dropdown on logout
+    setIsDropdownOpen(false); 
     navigate("/login");
   };
 
   return (
     <nav className="relative z-[100] flex justify-between items-center px-8 md:px-12 py-6 backdrop-blur-xl border-b border-white/5 bg-black/20">
-      {/* BRAND LOGO */}
+      
       <Link
         to="/"
         className="text-3xl font-black tracking-tighter bg-gradient-to-r from-white to-red-500 bg-clip-text text-transparent hover:scale-105 transition-transform italic"
@@ -37,7 +37,6 @@ const Navbar = () => {
               </div>
               
               <div className="relative">
-                {/* Profile Avatar Trigger */}
                 <button 
                   onClick={() => setIsDropdownOpen(!isDropdownOpen)}
                   className="w-10 h-10 rounded-full border-2 border-red-600 overflow-hidden hover:border-white transition-all shadow-lg shadow-red-600/20"
@@ -45,17 +44,13 @@ const Navbar = () => {
                   <img src={user?.avatar} alt="avatar" className="w-full h-full object-cover" />
                 </button>
 
-                {/* --- THE DISAPPEARING LOGIC --- */}
                 {isDropdownOpen && (
                   <>
-                    {/* INVISIBLE CLICK-AWAY OVERLAY */}
-                    {/* This div covers the whole screen and closes the menu when clicked */}
                     <div 
                       className="fixed inset-0 z-10 cursor-default" 
                       onClick={() => setIsDropdownOpen(false)}
                     ></div>
 
-                    {/* DROPDOWN MENU */}
                     <div className="absolute right-0 mt-4 w-60 bg-[#121212] border border-white/5 rounded-[1.5rem] shadow-2xl p-2 z-20 animate-in fade-in zoom-in-95 duration-200">
                       <DropdownLink 
                         to="/profile" 
@@ -93,7 +88,6 @@ const Navbar = () => {
   );
 };
 
-// Reusable Dropdown Item with Click Handler to close menu
 const DropdownLink = ({ to, label, onClick }) => (
   <Link 
     to={to} 

@@ -353,36 +353,26 @@ const addtoWatchHistory = asyncHandler(async (req, res) => {
 export const getPublicProfile = asyncHandler(async (req, res) => {
   const { username } = req.params;
 
-  if (!username) {
-    throw new APIError(400, "Username is required");
-  }
+  const user = await User.findOne({ username }).select("-password -refreshToken -email");
 
-  const user = await User.findOne({ username }).select(
-    "-password -refreshToken -email",
-  );
+  if (!user) throw new APIError(404, "User not found");
 
-  if (!user) {
-    throw new APIError(404, "User not found");
-  }
+  const processedUser = {
+    ...user._doc,
+    followersCount: user.followers?.length || 0,
+    followingCount: user.following?.length || 0,
+    isFollowing: req.user ? user.followers.some(id => id.toString() === req.user._id.toString()) : false
+  };
 
-  const publicCollections = await List.find({
-    owner: user._id,
-    isPublic: true,
-  }).populate("movies");
-
-  // 3. Fetch Reviews
+  const publicCollections = await List.find({ owner: user._id, isPublic: true }).populate("movies");
   const reviews = await Review.find({ owner: user._id }).populate("movie");
 
   return res.status(200).json(
-    new APIResponse(
-      200,
-      {
-        user,
-        collections: publicCollections,
-        reviews: reviews,
-      },
-      "Public profile fetched successfully",
-    ),
+    new APIResponse(200, {
+      user: processedUser, // Now contains everything
+      collections: publicCollections,
+      reviews: reviews,
+    }, "Profile fetched")
   );
 });
 

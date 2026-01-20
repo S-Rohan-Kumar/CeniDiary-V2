@@ -46,7 +46,7 @@ export default function Register() {
 
   return (
     <div className="flex justify-center items-center min-h-screen py-20 px-4 bg-black relative overflow-hidden">
-    {/* Animated background */}
+    
     <div className="absolute inset-0">
       <div className="absolute top-0 -right-40 w-96 h-96 bg-red-600/20 rounded-full blur-[120px] animate-pulse"></div>
       <div className="absolute bottom-0 -left-40 w-96 h-96 bg-red-800/20 rounded-full blur-[120px] animate-pulse"></div>
@@ -60,7 +60,6 @@ export default function Register() {
 
       {error && <div className="bg-red-500/10 border border-red-500/30 text-red-400 p-3 rounded-xl mb-6 text-sm">{error}</div>}
 
-      {/* Avatar Upload */}
       <div className="flex flex-col items-center mb-8">
         <div className="w-24 h-24 rounded-full border-2 border-dashed border-red-600/40 hover:border-red-600/70 flex items-center justify-center overflow-hidden bg-zinc-900/50 transition-all">
           {preview ? (

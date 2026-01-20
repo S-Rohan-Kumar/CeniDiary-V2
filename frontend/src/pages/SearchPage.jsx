@@ -22,7 +22,6 @@ export default function SearchPage() {
 
     setLoading(true);
     try {
-      // 1. Fetch Movies/Web Series from TMDB Multi-Search
       const movieRes = await axios.get(
         `https://api.themoviedb.org/3/search/multi?query=${query}&api_key=YOUR_TMDB_KEY`
       );

@@ -19,11 +19,11 @@ export const MovieProvider = ({ children }) => {
     setLoading(true);
     try {
       const endpoint = query
-        ? `/api/v1/movies/search?query=${query}` 
-        : `/api/v1/movies/trending`;          
+        ? `/api/v1/movies/search?query=${query}`
+        : `/api/v1/movies/trending`;
 
-      const response = query 
-        ? await axios.get(endpoint) 
+      const response = query
+        ? await axios.get(endpoint)
         : await axios.post(endpoint);
 
       const fetchedMovies = response.data.data || [];
@@ -47,7 +47,15 @@ export const MovieProvider = ({ children }) => {
   return (
     <MovieContext.Provider
       // ADD setMovies AND setLoading TO THE VALUE OBJECT
-      value={{ movies, setMovies, favorites, loading, setLoading, toggleFavorite, fetchMovies }}
+      value={{
+        movies,
+        setMovies,
+        favorites,
+        loading,
+        setLoading,
+        toggleFavorite,
+        fetchMovies,
+      }}
     >
       {children}
     </MovieContext.Provider>

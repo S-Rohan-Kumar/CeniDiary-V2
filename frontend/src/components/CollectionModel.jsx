@@ -1,13 +1,11 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 
-export default function CollectionModel({ movieDbId, onClose, triggerToast }) {
-  // View States
-  const [view, setView] = useState("list"); // 'list' or 'create'
+export default function CollectionModel({ movieDbId, mediaType, onClose, triggerToast }) {
+  const [view, setView] = useState("list");
   const [lists, setLists] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  // Form States for Create
   const [formData, setFormData] = useState({
     title: "",
     description: "",
@@ -33,15 +31,17 @@ export default function CollectionModel({ movieDbId, onClose, triggerToast }) {
   const handleToggleMovie = async (listId, isInside) => {
     try {
       if (isInside) {
-        await axios.delete(`/api/v1/lists/remove/${listId}/${movieDbId}`);
-        triggerToast("Removed from Collection!");
+        await axios.delete(`/api/v1/lists/remove/${listId}/${movieDbId}?mediaType=${mediaType || 'movie'}`);
+        triggerToast?.("Removed from Collection!");
       } else {
-        await axios.post(`/api/v1/lists/add/${listId}/${movieDbId}`);
-        triggerToast("Added to Collection. Check Out");
+        await axios.post(`/api/v1/lists/add/${listId}/${movieDbId}`, { 
+          mediaType: mediaType || 'movie' 
+        });
+        triggerToast?.("Added to Collection. Check Out");
       }
       fetchLists();
     } catch (err) {
-      console.error(err);
+      console.error("Operation failed:", err.response?.data || err.message);
     }
   };
 
@@ -50,12 +50,16 @@ export default function CollectionModel({ movieDbId, onClose, triggerToast }) {
     if (!formData.title.trim()) return;
 
     try {
-      // Hits your router.post('/create', createList) route
-      const res = await axios.post("/api/v1/lists/create", formData);
+      const res = await axios.post("/api/v1/lists/create", {
+        title: formData.title,
+        description: formData.description,
+        isPublic: formData.isPublic
+      });
+      console.log(formData)
       if (res.status === 201) {
-        triggerToast("Collection Created Successfully!");
+        triggerToast?.("Collection Created Successfully!");
         setFormData({ title: "", description: "", isPublic: false });
-        setView("list"); // Switch back to see the new list
+        setView("list"); 
         fetchLists();
       }
     } catch (err) {
@@ -64,9 +68,9 @@ export default function CollectionModel({ movieDbId, onClose, triggerToast }) {
   };
 
   return (
-    <div className="fixed inset-0 z-[110] flex items-center justify-center bg-black/70 backdrop-blur-sm p-6">
+    <div className="fixed inset-0 z-[110] flex items-center justify-center bg-black/70 backdrop-blur-sm p-6 text-left">
       <div className="bg-[#1A1A1A] border border-white/5 w-full max-w-lg rounded-[2.5rem] p-10 shadow-2xl relative">
-        {/* --- VIEW 1: LIST COLLECTIONS --- */}
+        
         {view === "list" ? (
           <>
             <div className="flex justify-between items-center mb-10">
@@ -77,14 +81,7 @@ export default function CollectionModel({ movieDbId, onClose, triggerToast }) {
                 onClick={onClose}
                 className="text-zinc-500 hover:text-white transition-colors"
               >
-                <svg
-                  width="24"
-                  height="24"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2.5"
-                >
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
                   <line x1="18" y1="6" x2="6" y2="18"></line>
                   <line x1="6" y1="6" x2="18" y2="18"></line>
                 </svg>
@@ -94,7 +91,7 @@ export default function CollectionModel({ movieDbId, onClose, triggerToast }) {
             <div className="space-y-4 max-h-[350px] overflow-y-auto no-scrollbar">
               {lists.map((list) => {
                 const isInside = list.movies.some(
-                  (m) => m.tmdbId === Number(movieDbId),
+                  (m) => m.tmdbId === Number(movieDbId) && (m.mediaType === mediaType || !m.mediaType)
                 );
                 return (
                   <div
@@ -104,17 +101,10 @@ export default function CollectionModel({ movieDbId, onClose, triggerToast }) {
                   >
                     <div className="flex items-center gap-4">
                       <div
-                        className={`w-5 h-5 rounded-md border-2 flex items-center justify-center transition-all ${isInside ? "bg-zinc-800 border-zinc-600" : "border-zinc-700"}`}
+                        className={`w-5 h-5 rounded-md border-2 flex items-center justify-center transition-all ${isInside ? "bg-red-600 border-red-600" : "border-zinc-700"}`}
                       >
                         {isInside && (
-                          <svg
-                            width="12"
-                            height="12"
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke="white"
-                            strokeWidth="4"
-                          >
+                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="4">
                             <polyline points="20 6 9 17 4 12"></polyline>
                           </svg>
                         )}
@@ -124,39 +114,15 @@ export default function CollectionModel({ movieDbId, onClose, triggerToast }) {
                       </span>
                     </div>
 
-                    {/* --- DYNAMIC VISIBILITY ICON --- */}
                     {list.isPublic ? (
-                      /* Globe Icon for Public Shelves */
-                      <svg
-                        width="14"
-                        height="14"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="#525252"
-                        strokeWidth="2.5"
-                      >
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#525252" strokeWidth="2.5">
                         <circle cx="12" cy="12" r="10"></circle>
                         <line x1="2" y1="12" x2="22" y2="12"></line>
                         <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
                       </svg>
                     ) : (
-                      /* Lock Icon for Private Shelves */
-                      <svg
-                        width="14"
-                        height="14"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="#525252"
-                        strokeWidth="2.5"
-                      >
-                        <rect
-                          x="3"
-                          y="11"
-                          width="18"
-                          height="11"
-                          rx="2"
-                          ry="2"
-                        ></rect>
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#525252" strokeWidth="2.5">
+                        <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
                         <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
                       </svg>
                     )}
@@ -169,14 +135,12 @@ export default function CollectionModel({ movieDbId, onClose, triggerToast }) {
               onClick={() => setView("create")}
               className="w-full mt-10 flex items-center gap-3 bg-[#1A1A1A] border border-dashed border-white/10 p-5 rounded-2xl text-zinc-300 font-bold text-sm hover:border-white/20 transition-all"
             >
-              <div className="w-6 h-6 rounded-full bg-white text-black flex items-center justify-center font-black text-lg">
-                +
-              </div>
+              <div className="w-6 h-6 rounded-full bg-white text-black flex items-center justify-center font-black text-lg">+</div>
               Create New Collection
             </button>
           </>
         ) : (
-          /* --- VIEW 2: CREATE COLLECTION FORM (Match Reference) --- */
+          /* --- VIEW 2: CREATE COLLECTION FORM --- */
           <div className="animate-in fade-in slide-in-from-bottom-4 duration-300">
             <div className="flex justify-between items-center mb-8">
               <h3 className="text-white text-xl font-bold tracking-tight">
@@ -186,14 +150,7 @@ export default function CollectionModel({ movieDbId, onClose, triggerToast }) {
                 onClick={() => setView("list")}
                 className="text-zinc-500 hover:text-white transition-colors"
               >
-                <svg
-                  width="24"
-                  height="24"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2.5"
-                >
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
                   <line x1="18" y1="6" x2="6" y2="18"></line>
                   <line x1="6" y1="6" x2="18" y2="18"></line>
                 </svg>
@@ -210,11 +167,9 @@ export default function CollectionModel({ movieDbId, onClose, triggerToast }) {
                   type="text"
                   placeholder="Enter a name for your collection"
                   maxLength={50}
-                  className="w-full bg-[#262626] border border-white/5 rounded-xl p-4 text-white outline-none focus:border-purple-500 transition-all"
+                  className="w-full bg-[#262626] border border-white/5 rounded-xl p-4 text-white outline-none focus:border-red-600 transition-all"
                   value={formData.title}
-                  onChange={(e) =>
-                    setFormData({ ...formData, title: e.target.value })
-                  }
+                  onChange={(e) => setFormData({ ...formData, title: e.target.value })}
                 />
               </div>
 
@@ -226,68 +181,34 @@ export default function CollectionModel({ movieDbId, onClose, triggerToast }) {
                 <textarea
                   placeholder="Add a description (optional)"
                   maxLength={150}
-                  className="w-full bg-[#262626] border border-white/5 rounded-xl p-4 text-white outline-none focus:border-purple-500 transition-all h-28 resize-none"
+                  className="w-full bg-[#262626] border border-white/5 rounded-xl p-4 text-white outline-none focus:border-red-600 transition-all h-28 resize-none"
                   value={formData.description}
-                  onChange={(e) =>
-                    setFormData({ ...formData, description: e.target.value })
-                  }
+                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                 />
               </div>
 
               <div>
-                <p className="text-[10px] font-black uppercase text-zinc-500 mb-3">
-                  Visibility
-                </p>
+                <p className="text-[10px] font-black uppercase text-zinc-500 mb-3">Visibility</p>
                 <div className="flex bg-[#262626] p-1 rounded-xl border border-white/5">
                   <button
-                    onClick={() =>
-                      setFormData({ ...formData, isPublic: false })
-                    }
+                    type="button"
+                    onClick={() => setFormData({ ...formData, isPublic: false })}
                     className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-lg font-bold text-sm transition-all ${!formData.isPublic ? "bg-zinc-700 text-white shadow-lg" : "text-zinc-500"}`}
                   >
-                    <svg
-                      width="14"
-                      height="14"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2.5"
-                    >
-                      <rect
-                        x="3"
-                        y="11"
-                        width="18"
-                        height="11"
-                        rx="2"
-                        ry="2"
-                      ></rect>
-                      <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
-                    </svg>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
                     Private
                   </button>
                   <button
+                    type="button"
                     onClick={() => setFormData({ ...formData, isPublic: true })}
                     className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-lg font-bold text-sm transition-all ${formData.isPublic ? "bg-zinc-700 text-white shadow-lg" : "text-zinc-500"}`}
                   >
-                    <svg
-                      width="14"
-                      height="14"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2.5"
-                    >
-                      <circle cx="12" cy="12" r="10"></circle>
-                      <line x1="2" y1="12" x2="22" y2="12"></line>
-                      <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
-                    </svg>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg>
                     Public
                   </button>
                 </div>
                 <p className="text-[10px] text-zinc-600 mt-3 italic font-medium">
-                  {formData.isPublic
-                    ? "Anyone can see this watchlist"
-                    : "Only you can see this watchlist"}
+                  {formData.isPublic ? "Anyone can see this watchlist" : "Only you can see this watchlist"}
                 </p>
               </div>
 

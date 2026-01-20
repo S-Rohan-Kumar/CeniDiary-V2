@@ -4,47 +4,37 @@ import { asyncHandler } from "../utils/async-handler.js";
 import { User } from "../models/user.model.js";
 
 const toggleFollow = asyncHandler(async (req, res) => {
-  const { targtetUserId } = req.params;
+  const { targetUserId } = req.params; // Fixed typo from 'targtetUserId'
   const userId = req.user?._id;
 
-  if (targtetUserId === userId.toString()) {
+  if (targetUserId === userId.toString()) {
     throw new APIError(400, "You cannot follow/unfollow yourself");
   }
 
-  const targetUser = await User.findById(targtetUserId);
+  const targetUser = await User.findById(targetUserId);
   if (!targetUser) {
     throw new APIError(404, "User not found");
   }
 
-  const isFollowing = targetUser.followers?.includes(userId);
+  const isFollowing = targetUser.followers.some(
+    (followerId) => followerId.toString() === userId.toString()
+  );
 
   if (isFollowing) {
-    await User.findByIdAndUpdate(userId, {
-      $pull: { following: targtetUserId },
-    });
-    await User.findByIdAndUpdate(targtetUserId, {
-      $pull: { followers: userId },
-    });
+    await User.findByIdAndUpdate(userId, { $pull: { following: targetUserId } });
+    await User.findByIdAndUpdate(targetUserId, { $pull: { followers: userId } });
   } else {
-    await User.findByIdAndUpdate(userId, {
-      $addToSet: { following: targtetUserId },
-    });
-    await User.findByIdAndUpdate(targtetUserId, {
-      $addToSet: { followers: userId },
-    });
+    await User.findByIdAndUpdate(userId, { $addToSet: { following: targetUserId } });
+    await User.findByIdAndUpdate(targetUserId, { $addToSet: { followers: userId } });
   }
 
-  return res
-    .status(200)
-    .json(
-      new APIResponse(
-        200,
-        null,
-        isFollowing
-          ? "User unfollowed successfully"
-          : "User followed successfully"
-      )
-    );
+  return res.status(200).json(
+    new APIResponse(
+      200,
+      { isFollowing: !isFollowing },
+      isFollowing ? "Unfollowed successfully" : "Followed successfully"
+    )
+  );
 });
 
 const searchUsers = asyncHandler(async (req, res) => {

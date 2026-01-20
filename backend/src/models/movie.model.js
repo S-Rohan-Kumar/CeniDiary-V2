@@ -1,39 +1,51 @@
-import mongoose ,{ Schema } from "mongoose";
+import mongoose, { Schema } from "mongoose";
 
-const movieSchema = new Schema({
-    tmdbId : {
-        type : Number,
-        required : true,
-        unique : true,
-        index : true
+const movieSchema = new Schema(
+  {
+    tmdbId: {
+      type: Number,
+      required: true,
+      index: true,
     },
-    title : {
-        type : String,
-        required : true,
-        trim : true
+    mediaType: {
+      type: String,
+      required: true,
+      enum: ["movie", "tv"],
+      default: "movie",
     },
-    posterPath : {
-        type : String,
-        required : true
+    title: {
+      type: String,
+      required: true,
+      trim: true,
     },
-    backdropPath : {
-        type : String,
-        required : true
+    posterPath: {
+      type: String,
+      required: true,
+    },
+    backdropPath: {
+      type: String,
+      required: true,
     },
     overview: {
-        type: String
+      type: String,
     },
     releaseDate: {
-        type: String
+      type: String,
     },
-    genreIds: [{
-        type: Number
-    }],
+    genreIds: [
+      {
+        type: Number,
+      },
+    ],
     voteAverage: {
-        type: Number
-    }    
-},{
-    timestamps : true
-})
+      type: Number,
+    },
+  },
+  {
+    timestamps: true,
+  },
+);
+
+movieSchema.index({ tmdbId: 1, mediaType: 1 }, { unique: true });
 
 export const Movie = mongoose.model("Movie", movieSchema);

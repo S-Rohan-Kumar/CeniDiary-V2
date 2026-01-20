@@ -23,7 +23,6 @@ const EditProfileModal = ({ user, onClose }) => {
     setLoading(true);
 
     try {
-      // Use FormData to send both text and files in one request
       const formData = new FormData();
       formData.append("fullname", fullname);
       formData.append("username", username);
@@ -32,12 +31,10 @@ const EditProfileModal = ({ user, onClose }) => {
         formData.append("avatar", avatarFile);
       }
 
-      // Single PATCH request to your combined controller
       await axios.patch("/api/v1/users/me/update", formData, {
         headers: { "Content-Type": "multipart/form-data" },
       });
 
-      // Refresh the page to reflect the brand-new data
       window.location.reload(); 
     } catch (err) {
       console.error("Update failed:", err.response?.data?.message || err.message);
@@ -56,7 +53,6 @@ const EditProfileModal = ({ user, onClose }) => {
         
         <form onSubmit={handleUpdate} className="space-y-6 text-left">
           
-          {/* Avatar Picker */}
           <div className="flex flex-col items-center gap-4 mb-4">
             <div className="w-24 h-24 rounded-full border-2 border-red-600 overflow-hidden shadow-lg shadow-red-600/20">
               <img src={preview} className="w-full h-full object-cover" alt="preview" />
@@ -67,7 +63,6 @@ const EditProfileModal = ({ user, onClose }) => {
             </label>
           </div>
 
-          {/* Full Name Field */}
           <div>
             <p className="text-[10px] font-black uppercase text-zinc-600 mb-2 tracking-widest italic">Full Name</p>
             <input 
@@ -78,7 +73,6 @@ const EditProfileModal = ({ user, onClose }) => {
             />
           </div>
 
-          {/* Username Field */}
           <div>
             <p className="text-[10px] font-black uppercase text-zinc-600 mb-2 tracking-widest italic">Username</p>
             <input 
@@ -89,7 +83,6 @@ const EditProfileModal = ({ user, onClose }) => {
             />
           </div>
 
-          {/* Buttons */}
           <div className="flex gap-4 pt-6">
             <button 
               type="submit" 

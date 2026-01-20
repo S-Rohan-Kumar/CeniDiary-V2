@@ -32,7 +32,7 @@ export default function Login() {
 
   return (
     <div className="flex justify-center items-center min-h-screen px-4 bg-black relative overflow-hidden">
-    {/* Animated background */}
+    
     <div className="absolute inset-0">
       <div className="absolute top-0 -left-40 w-96 h-96 bg-red-600/20 rounded-full blur-[120px] animate-pulse"></div>
       <div className="absolute bottom-0 -right-40 w-96 h-96 bg-red-800/20 rounded-full blur-[120px] animate-pulse"></div>

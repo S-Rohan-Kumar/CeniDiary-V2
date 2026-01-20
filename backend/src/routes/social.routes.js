@@ -6,7 +6,7 @@ const router = Router();
 
 router.use(verifyJWT);
 
-router.post("/follow/:targtetUserId", toggleFollow);    
+router.route("/follow/:targetUserId").post(verifyJWT, toggleFollow);   
 router.get("/search", searchUsers);
 router.get("/status/:userId", getUserStatus);
 router.get("/status", getUserStatus);
