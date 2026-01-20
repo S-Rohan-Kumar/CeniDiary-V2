@@ -22,7 +22,9 @@ import listRoute from "./routes/list.routes.js";
 import socialRoute from "./routes/social.routes.js";
 
 
-
+app.get("/ping", (req, res) => {
+  res.status(200).send("Server is alive");
+});
 //Routes
 app.use("/api/v1/users", userRoute);
 
