@@ -75,7 +75,7 @@ const registerUser = asyncHandler(async (req, res) => {
     user.verifyTokenExpiry = Date.now() + 3600000; // 1 hr
     await user.save({ validateBeforeSave: false });
 
-    const verifyLink = `http://localhost:5000/api/v1/users/verify/${verifyToken}`;
+    const verifyLink = `https://cenidiary-v2.onrender.com/api/v1/users/verify/${verifyToken}`;
 
     await sendMail({
       email: user.email,
