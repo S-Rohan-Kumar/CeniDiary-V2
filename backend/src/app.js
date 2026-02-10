@@ -8,7 +8,7 @@ const app = express();
 app.use(express.json({ limit: "16kb" }));
 app.use(cors({
     origin: [
-        "https://ceni-diary-v2.vercel.app/",
+        "https://ceni-diary-v2.vercel.app",
         "http://localhost:5173/"
     ],
     credentials: true,
