@@ -75,7 +75,7 @@ Create a `.env` file:
 
 ```env
 PORT=8000
-MONGODB_URI=your_mongodb_connection_string
+MONGO_URL=your_mongodb_connection_string
 ACCESS_TOKEN_SECRET=your_access_token_secret
 REFRESH_TOKEN_SECRET=your_refresh_token_secret
 CORS_ORIGIN=http://localhost:5173
